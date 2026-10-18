@@ -44,7 +44,7 @@ enum HookInstaller {
     /// Writes through symlinks. A missing file is created; malformed JSON throws and writes nothing.
     static func installToDisk(settingsURL: URL, executablePath: String) throws {
         let target = settingsURL.resolvingSymlinksInPath()
-        let updated = try install(into: try? Data(contentsOf: target), executablePath: executablePath)
+        let updated = try install(into: try readIfPresent(target), executablePath: executablePath)
         try FileManager.default.createDirectory(at: target.deletingLastPathComponent(),
                                                 withIntermediateDirectories: true)
         try updated.write(to: target, options: .atomic)
@@ -52,8 +52,17 @@ enum HookInstaller {
 
     static func removeFromDisk(settingsURL: URL) throws {
         let target = settingsURL.resolvingSymlinksInPath()
-        guard let data = try? Data(contentsOf: target) else { return }
+        guard let data = try readIfPresent(target) else { return }
         try remove(from: data).write(to: target, options: .atomic)
+    }
+
+    /// nil only when the file does not exist; any other read failure (permissions, evicted file) throws.
+    private static func readIfPresent(_ url: URL) throws -> Data? {
+        do {
+            return try Data(contentsOf: url)
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+            return nil
+        }
     }
 
     private static func parse(_ data: Data?) throws -> [String: Any] {

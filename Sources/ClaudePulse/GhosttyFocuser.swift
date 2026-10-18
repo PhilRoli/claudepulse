@@ -58,11 +58,12 @@ final class GhosttyFocuser {
         return .success(terminals)
     }
 
+    /// `NSRunningApplication.activate()` is ignored when the caller is an inactive accessory app, so go through
+    /// the workspace, which also launches Ghostty when it isn't running.
     private func activate() {
-        if let app = NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).first {
-            app.activate()
-        } else if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Self.bundleID) {
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
-        }
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Self.bundleID) else { return }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration)
     }
 }

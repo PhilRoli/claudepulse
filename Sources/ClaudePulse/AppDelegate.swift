@@ -64,6 +64,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.configStore.save($0)
                 if $0.notificationsEnabled { self.notifications.requestAuthorization() }
             }
+            controller.onHooksRemoved = { [unowned self] in
+                self.store.clearAll()
+                self.refresh()
+            }
             prefs = controller
         }
         prefs?.show()

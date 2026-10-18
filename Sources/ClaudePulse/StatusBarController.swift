@@ -69,7 +69,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func tick() {
-        let byID = Dictionary(uniqueKeysWithValues: rows().map { ($0.sessionID, $0) })
+        let byID = Dictionary(rows().map { ($0.sessionID, $0) }, uniquingKeysWith: { first, _ in first })
         for (item, id) in sessionItems {
             if let row = byID[id] { item.attributedTitle = title(for: row) }
         }

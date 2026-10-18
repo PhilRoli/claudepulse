@@ -1,9 +1,11 @@
 import Darwin
+import Foundation
 
-/// Finds the Claude Code process that spawned a hook. The hook's direct parent is often a short-lived shell,
-/// so recording `getppid()` would make the session look dead immediately.
+/// Finds the Claude Code process that spawned a hook: the first ancestor that is not a shell. The hook's direct
+/// parent is often a short-lived shell, so recording `getppid()` would make the session look dead immediately.
+/// Matching on the name "claude" would miss installs whose binary is named after its version.
 enum ClaudeProcess {
-    private static let names: Set<String> = ["claude", "node"]
+    private static let shells: Set<String> = ["sh", "bash", "zsh", "dash", "fish", "ksh", "tcsh"]
     private static let maxDepth = 10
 
     static func find(from start: Int32, lookup: (Int32) -> (ppid: Int32, name: String)? = systemLookup) -> Int32? {
@@ -11,7 +13,7 @@ enum ClaudeProcess {
         var seen: Set<Int32> = []
         for _ in 0..<maxDepth {
             guard pid > 1, seen.insert(pid).inserted, let info = lookup(pid) else { return nil }
-            if names.contains(info.name) { return pid }
+            if !shells.contains(info.name.trimmingCharacters(in: CharacterSet(charactersIn: "-"))) { return pid }
             pid = info.ppid
         }
         return nil

@@ -32,16 +32,34 @@ final class SessionReducerTests: XCTestCase {
     }
 
     func testNotificationWhileWorkingNeedsInput() {
-        XCTAssertEqual(apply(.notification(isIdleReminder: false), to: record(.working))?.state, .needsInput)
+        XCTAssertEqual(apply(.notification(.needsInput), to: record(.working))?.state, .needsInput)
     }
 
     func testIdleReminderDoesNotOverwriteFinished() {
-        XCTAssertEqual(apply(.notification(isIdleReminder: true), to: record(.finished))?.state, .finished)
+        XCTAssertEqual(apply(.notification(.idleReminder), to: record(.finished))?.state, .finished)
     }
 
-    func testNotificationWithOutstandingSubagentKeepsState() {
-        let r = apply(.notification(isIdleReminder: false), to: record(.waitingForSubagent, subagents: 1))
+    func testPermissionPromptWhileSubagentRunningNeedsInput() {
+        let r = apply(.notification(.needsInput), to: record(.working, subagents: 1))
+        XCTAssertEqual(r?.state, .needsInput)
+        let waiting = apply(.notification(.needsInput), to: record(.waitingForSubagent, subagents: 1))
+        XCTAssertEqual(waiting?.state, .needsInput)
+    }
+
+    func testIdleReminderWithSubagentOutstandingKeepsState() {
+        let r = apply(.notification(.idleReminder), to: record(.waitingForSubagent, subagents: 1))
         XCTAssertEqual(r?.state, .waitingForSubagent)
+    }
+
+    func testIdleReminderWhileWorkingMeansIdle() {
+        let r = apply(.notification(.idleReminder), to: record(.working))
+        XCTAssertEqual(r?.state, .finished)
+        XCTAssertEqual(r?.seen, true)
+    }
+
+    func testOtherNotificationsChangeNothing() {
+        XCTAssertEqual(apply(.notification(.other), to: record(.working))?.state, .working)
+        XCTAssertEqual(apply(.notification(.other), to: record(.finished))?.state, .finished)
     }
 
     func testStopWithoutSubagentsFinishes() {
@@ -78,8 +96,12 @@ final class SessionReducerTests: XCTestCase {
         XCTAssertEqual(r?.cwd, "/p")
     }
 
-    func testSessionStartIsWorking() {
-        XCTAssertEqual(apply(.sessionStart, to: nil)?.state, .working)
+    func testSessionStartIsIdleNotWorking() {
+        let r = apply(.sessionStart, to: record(.working, subagents: 2))
+        XCTAssertEqual(r?.state, .finished)
+        XCTAssertEqual(r?.seen, true)
+        XCTAssertEqual(r?.subagents, 0)
+        XCTAssertEqual(apply(.sessionStart, to: nil)?.seen, true)
     }
 
     func testTerminalIDKeptWhenNewOneIsNil() {

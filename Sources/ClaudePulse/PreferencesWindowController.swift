@@ -4,6 +4,7 @@ import MenuBarKit
 @MainActor
 final class PreferencesWindowController: NSWindowController {
     var onChange: ((AppConfig) -> Void)?
+    var onHooksRemoved: (() -> Void)?
 
     private var config: AppConfig
     private let loginItem: LoginItemController
@@ -94,6 +95,7 @@ final class PreferencesWindowController: NSWindowController {
     @objc private func removeHooks() {
         do {
             try HookInstaller.removeFromDisk(settingsURL: settingsURL)
+            onHooksRemoved?()
             refreshHooksStatus()
         } catch {
             refreshHooksStatus(error: "settings.json is not valid JSON")

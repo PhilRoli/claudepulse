@@ -18,7 +18,8 @@ final class HookRunnerTests: XCTestCase {
     }
 
     private func files() -> [String] {
-        ((try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []).sorted()
+        let all = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        return all.filter { $0.hasSuffix(".json") }.sorted()
     }
 
     func testStopWritesFinishedRecord() throws {
@@ -56,14 +57,26 @@ final class HookRunnerTests: XCTestCase {
         XCTAssertEqual(files(), [])
     }
 
+    func testConcurrentSubagentStartsAreNotLost() throws {
+        DispatchQueue.concurrentPerform(iterations: 20) { _ in
+            _ = run("SubagentStart", #"{"session_id":"a","cwd":"/p"}"#)
+        }
+        let data = try Data(contentsOf: dir.appendingPathComponent("a.json"))
+        XCTAssertEqual(SessionStore.decode(data)?.subagents, 20)
+    }
+
     func testEventMapping() {
         XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: ["notification_type": "idle_prompt"]),
-                       .notification(isIdleReminder: true))
+                       .notification(.idleReminder))
         XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification",
                                             payload: ["notification_type": "permission_prompt"]),
-                       .notification(isIdleReminder: false))
-        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: [:]),
-                       .notification(isIdleReminder: false))
+                       .notification(.needsInput))
+        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification",
+                                            payload: ["notification_type": "elicitation_dialog"]),
+                       .notification(.needsInput))
+        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: ["notification_type": "auth_success"]),
+                       .notification(.other))
+        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: [:]), .notification(.needsInput))
         XCTAssertEqual(HookRunner.eventFrom(hookName: "SubagentStop", payload: [:]), .subagentStop)
         XCTAssertNil(HookRunner.eventFrom(hookName: "Bogus", payload: [:]))
     }

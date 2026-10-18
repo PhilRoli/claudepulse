@@ -14,7 +14,9 @@ func reduce(_ record: SessionRecord?, event: HookEvent, sessionID: String, cwd: 
 
     switch event {
     case .sessionStart:
-        next.state = .working
+        // A fresh, cleared, compacted or resumed session sits idle until the first prompt.
+        next.subagents = 0
+        markIdle(&next)
     case .preToolUse:
         // Tool calls made by a running subagent must not pull the session out of waiting.
         if !(next.state == .waitingForSubagent && next.subagents > 0) { next.state = .working }
@@ -27,14 +29,24 @@ func reduce(_ record: SessionRecord?, event: HookEvent, sessionID: String, cwd: 
     case .subagentStop:
         next.subagents = max(0, next.subagents - 1)
         if next.state == .waitingForSubagent, next.subagents == 0 { finish(&next) }
-    case .notification(let isIdleReminder):
-        if !isIdleReminder, next.subagents == 0 { next.state = .needsInput }
+    case .notification(.needsInput):
+        next.state = .needsInput
+    case .notification(.idleReminder):
+        // Claude waiting for a prompt while we think it works means the turn was interrupted.
+        if next.state == .working, next.subagents == 0 { markIdle(&next) }
+    case .notification(.other):
+        break
     case .stop:
         if next.subagents > 0 { next.state = .waitingForSubagent } else { finish(&next) }
     case .sessionEnd:
         break
     }
     return next
+}
+
+private func markIdle(_ record: inout SessionRecord) {
+    record.state = .finished
+    record.seen = true
 }
 
 private func finish(_ record: inout SessionRecord) {

@@ -17,7 +17,7 @@ final class NotificationManager {
     /// Sessions that newly entered needs input or finished since `old`.
     static func shouldNotify(old: [SessionRecord], new: [SessionRecord], enabled: Bool) -> [SessionRecord] {
         guard enabled else { return [] }
-        let before = Dictionary(uniqueKeysWithValues: old.map { ($0.sessionID, $0.state) })
+        let before = Dictionary(old.map { ($0.sessionID, $0.state) }, uniquingKeysWith: { first, _ in first })
         return new.filter { record in
             guard record.state == .needsInput || record.state == .finished else { return false }
             return before[record.sessionID] != record.state

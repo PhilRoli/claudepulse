@@ -84,4 +84,20 @@ final class HookInstallerTests: XCTestCase {
         try HookInstaller.removeFromDisk(settingsURL: file)
         XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? Int, 0o600)
     }
+
+    func testUnreadableSettingsAreNotOverwritten() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer {
+            let path = dir.appendingPathComponent("s.json").path
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let file = dir.appendingPathComponent("s.json")
+        try Data(#"{"model":"opus"}"#.utf8).write(to: file)
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: file.path)
+        XCTAssertThrowsError(try HookInstaller.installToDisk(settingsURL: file, executablePath: exe))
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+        XCTAssertEqual(try String(contentsOf: file), #"{"model":"opus"}"#)
+    }
 }

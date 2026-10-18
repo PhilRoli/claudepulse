@@ -16,6 +16,8 @@
     <string>$(BUILD_VERSION)</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>ClaudePulse focuses the Ghostty terminal of a Claude Code session when you click it.</string>
     <key>LSUIElement</key>
     <true/>
     <key>LSMinimumSystemVersion</key>

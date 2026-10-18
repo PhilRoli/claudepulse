@@ -39,7 +39,8 @@ final class SessionStore {
             guard let record = Self.decode(try? Data(contentsOf: url)) else { continue }
             if isStale(record) {
                 try? FileManager.default.removeItem(at: url)
-            } else {
+                SessionLock.remove(directory: directory, sessionID: record.sessionID)
+            } else if !records.contains(where: { $0.sessionID == record.sessionID }) {
                 records.append(record)
             }
         }
@@ -48,11 +49,21 @@ final class SessionStore {
 
     func markSeen(sessionID: String) {
         let url = directory.appendingPathComponent("\(sessionID).json")
-        guard var record = Self.decode(try? Data(contentsOf: url)), record.state == .finished, !record.seen else {
-            return
+        try? SessionLock.run(directory: directory, sessionID: sessionID) {
+            guard var record = Self.decode(try? Data(contentsOf: url)), record.state == .finished, !record.seen else {
+                return
+            }
+            record.seen = true
+            try Self.encode(record).write(to: url, options: .atomic)
         }
-        record.seen = true
-        try? Self.encode(record).write(to: url, options: .atomic)
+    }
+
+    /// Drops every session file, e.g. after the hooks are removed and nothing will update them any more.
+    func clearAll() {
+        let urls = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+        for url in urls where ["json", "lock"].contains(url.pathExtension) {
+            try? FileManager.default.removeItem(at: url)
+        }
     }
 
     func startWatching() {

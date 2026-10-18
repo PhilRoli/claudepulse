@@ -61,4 +61,27 @@ final class SessionStoreTests: XCTestCase {
         let s = SessionStore(directory: dir.appendingPathComponent("nope"))
         XCTAssertEqual(s.load(), [])
     }
+
+    func testClearAllRemovesRecordsAndLocks() throws {
+        try write("a")
+        try write("b")
+        FileManager.default.createFile(atPath: dir.appendingPathComponent("a.lock").path, contents: nil)
+        store().clearAll()
+        XCTAssertEqual(onDisk, [])
+        XCTAssertEqual(store().load(), [])
+    }
+
+    func testDuplicateSessionIDsLoadOnce() throws {
+        try write("a")
+        try FileManager.default.copyItem(at: dir.appendingPathComponent("a.json"),
+                                         to: dir.appendingPathComponent("a 2.json"))
+        XCTAssertEqual(store().load().map(\.sessionID), ["a"])
+    }
+
+    func testSessionEndAndPruneRemoveLockFile() throws {
+        try write("dead", pid: 99)
+        FileManager.default.createFile(atPath: dir.appendingPathComponent("dead.lock").path, contents: nil)
+        _ = store().load()
+        XCTAssertEqual(onDisk, [])
+    }
 }

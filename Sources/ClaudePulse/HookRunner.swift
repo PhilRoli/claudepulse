@@ -16,9 +16,16 @@ enum HookRunner {
         case "SubagentStop": return .subagentStop
         case "Stop": return .stop
         case "SessionEnd": return .sessionEnd
-        case "Notification":
-            return .notification(isIdleReminder: payload["notification_type"] as? String == "idle_prompt")
+        case "Notification": return .notification(notificationKind(payload["notification_type"] as? String))
         default: return nil
+        }
+    }
+
+    private static func notificationKind(_ type: String?) -> NotificationKind {
+        switch type {
+        case nil, "permission_prompt", "elicitation_dialog": .needsInput
+        case "idle_prompt": .idleReminder
+        default: .other
         }
     }
 
@@ -30,16 +37,16 @@ enum HookRunner {
         else { return 0 }
         let cwd = payload["cwd"] as? String ?? ""
         let file = directory.appendingPathComponent("\(sessionID).json")
-        do {
+        try? SessionLock.run(directory: directory, sessionID: sessionID) {
             let existing = SessionStore.decode(try? Data(contentsOf: file))
             guard let next = reduce(existing, event: event, sessionID: sessionID, cwd: cwd,
                                     pid: pid, terminalID: nil, now: now) else {
                 try? FileManager.default.removeItem(at: file)
-                return 0
+                return
             }
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try SessionStore.encode(next).write(to: file, options: .atomic)
-        } catch {}
+        }
+        if event == .sessionEnd { SessionLock.remove(directory: directory, sessionID: sessionID) }
         return 0
     }
 

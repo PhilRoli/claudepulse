@@ -11,13 +11,13 @@ final class ClaudeProcessTests: XCTestCase {
         XCTAssertEqual(ClaudeProcess.find(from: 30, lookup: lookup(table)), 10)
     }
 
-    func testAcceptsNodeHostedClaude() {
-        let table: [Int32: (Int32, String)] = [20: (10, "sh"), 10: (1, "node")]
+    func testAnyNonShellAncestorIsClaude() {
+        let table: [Int32: (Int32, String)] = [20: (10, "sh"), 10: (1, "2.1.3")]
         XCTAssertEqual(ClaudeProcess.find(from: 20, lookup: lookup(table)), 10)
     }
 
-    func testNotFoundReturnsNil() {
-        let table: [Int32: (Int32, String)] = [30: (20, "sh"), 20: (1, "login")]
+    func testShellOnlyChainReturnsNil() {
+        let table: [Int32: (Int32, String)] = [30: (20, "sh"), 20: (2, "-zsh"), 2: (1, "bash")]
         XCTAssertNil(ClaudeProcess.find(from: 30, lookup: lookup(table)))
     }
 
