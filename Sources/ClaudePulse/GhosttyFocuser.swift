@@ -42,13 +42,17 @@ final class GhosttyFocuser {
 
     private func listTerminals() -> ListResult {
         var error: NSDictionary?
-        let script = NSAppleScript(source: "tell application \"Ghostty\" to get {id, working directory} of every terminal")
+        let script = NSAppleScript(
+            source: "tell application \"Ghostty\" to get {id, working directory} of every terminal")
         guard let result = script?.executeAndReturnError(&error), error == nil else {
             return .failure((error?[NSAppleScript.errorNumber] as? Int) ?? 0)
         }
-        guard result.numberOfItems == 2, let ids = result.atIndex(1), let dirs = result.atIndex(2) else { return .success([]) }
+        guard result.numberOfItems == 2, let ids = result.atIndex(1), let dirs = result.atIndex(2) else {
+            return .success([])
+        }
         let terminals = (0..<ids.numberOfItems).compactMap { i -> GhosttyTerminal? in
-            guard let id = ids.atIndex(i + 1)?.stringValue, let dir = dirs.atIndex(i + 1)?.stringValue else { return nil }
+            guard let id = ids.atIndex(i + 1)?.stringValue,
+                  let dir = dirs.atIndex(i + 1)?.stringValue else { return nil }
             return GhosttyTerminal(id: id, workingDirectory: dir)
         }
         return .success(terminals)

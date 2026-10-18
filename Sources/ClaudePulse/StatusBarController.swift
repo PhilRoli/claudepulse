@@ -46,7 +46,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         sessionItems = []
         let current = rows()
         if current.isEmpty {
-            menu.addItem(.info(NSAttributedString(string: "No active sessions", attributes: [.font: NSFont.systemFont(ofSize: 13)])))
+            let empty = NSAttributedString(string: "No active sessions",
+                                           attributes: [.font: NSFont.systemFont(ofSize: 13)])
+            menu.addItem(.info(empty))
         }
         for row in current {
             let item = NSMenuItem.item("", action: #selector(selected(_:)), target: self)
@@ -57,8 +59,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         if automationDenied {
             menu.addItem(.separator())
-            menu.addItem(.info(NSAttributedString(string: "Allow Automation for Ghostty in System Settings", attributes: [
-                .font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.systemOrange])))
+            let hint = NSAttributedString(string: "Allow Automation for Ghostty in System Settings", attributes: [
+                .font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.systemOrange])
+            menu.addItem(.info(hint))
         }
         menu.addItem(.separator())
         menu.addItem(.item("Preferences…", action: #selector(preferences), key: ",", target: self))

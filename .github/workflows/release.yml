@@ -1,0 +1,14 @@
+name: Release
+on:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:   # manual run = dry run (no release, no tap update)
+permissions:
+  contents: write
+jobs:
+  release:
+    uses: PhilRoli/menubar-kit/.github/workflows/release.yml@v1
+    with:
+      app: ClaudePulse
+      dry_run: ${{ github.event_name == 'workflow_dispatch' }}
+    secrets: inherit

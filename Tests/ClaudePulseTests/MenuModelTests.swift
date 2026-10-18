@@ -15,7 +15,8 @@ final class MenuModelTests: XCTestCase {
     }
 
     func testPriorityOrder() {
-        let all = [record(.working, id: "w"), record(.finished, id: "f"), record(.waitingForSubagent, id: "s"), record(.needsInput, id: "n")]
+        let all = [record(.working, id: "w"), record(.finished, id: "f"),
+                   record(.waitingForSubagent, id: "s"), record(.needsInput, id: "n")]
         XCTAssertEqual(MenuModel.title(for: all).symbol, "!")
         XCTAssertEqual(MenuModel.title(for: Array(all.dropLast())).symbol, "◐")
         XCTAssertEqual(MenuModel.title(for: [all[0], all[1]]).symbol, "✓")

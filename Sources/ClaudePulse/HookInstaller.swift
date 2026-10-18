@@ -13,7 +13,8 @@ enum HookInstaller {
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for event in events {
             var groups = strip(hooks[event] as? [[String: Any]] ?? [])
-            groups.append(["hooks": [["type": "command", "command": "\"\(executablePath)\" --hook \(event) \(marker)"]]])
+            let command = "\"\(executablePath)\" --hook \(event) \(marker)"
+            groups.append(["hooks": [["type": "command", "command": command]]])
             hooks[event] = groups
         }
         root["hooks"] = hooks
@@ -44,7 +45,8 @@ enum HookInstaller {
     static func installToDisk(settingsURL: URL, executablePath: String) throws {
         let target = settingsURL.resolvingSymlinksInPath()
         let updated = try install(into: try? Data(contentsOf: target), executablePath: executablePath)
-        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
         try updated.write(to: target, options: .atomic)
     }
 
@@ -56,12 +58,15 @@ enum HookInstaller {
 
     private static func parse(_ data: Data?) throws -> [String: Any] {
         guard let data, !data.allSatisfy({ $0 == 0x20 || $0 == 0x0A || $0 == 0x0D || $0 == 0x09 }) else { return [:] }
-        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw InvalidSettings() }
+        guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw InvalidSettings()
+        }
         return object
     }
 
     private static func serialize(_ root: [String: Any]) throws -> Data {
-        try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
+        try JSONSerialization.data(withJSONObject: root,
+                                   options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
     }
 
     private static func isOurs(_ hook: [String: Any]) -> Bool {

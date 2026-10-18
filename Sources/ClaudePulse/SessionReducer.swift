@@ -1,6 +1,7 @@
 import Foundation
 
-/// Folds one hook event into a session's record. Returns nil when the session ended (delete the file).
+// Folds one hook event into a session's record. Returns nil when the session ended (delete the file).
+// swiftlint:disable:next function_parameter_count cyclomatic_complexity
 func reduce(_ record: SessionRecord?, event: HookEvent, sessionID: String, cwd: String,
             pid: Int32?, terminalID: String?, now: Date) -> SessionRecord? {
     if event == .sessionEnd { return nil }

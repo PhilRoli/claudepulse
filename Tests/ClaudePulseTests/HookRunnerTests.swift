@@ -59,9 +59,11 @@ final class HookRunnerTests: XCTestCase {
     func testEventMapping() {
         XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: ["notification_type": "idle_prompt"]),
                        .notification(isIdleReminder: true))
-        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: ["notification_type": "permission_prompt"]),
+        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification",
+                                            payload: ["notification_type": "permission_prompt"]),
                        .notification(isIdleReminder: false))
-        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: [:]), .notification(isIdleReminder: false))
+        XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: [:]),
+                       .notification(isIdleReminder: false))
         XCTAssertEqual(HookRunner.eventFrom(hookName: "SubagentStop", payload: [:]), .subagentStop)
         XCTAssertNil(HookRunner.eventFrom(hookName: "Bogus", payload: [:]))
     }

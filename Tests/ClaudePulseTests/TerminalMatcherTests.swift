@@ -12,7 +12,8 @@ final class TerminalMatcherTests: XCTestCase {
                              GhosttyTerminal(id: "t3", workingDirectory: "/Users/x/bar")]
 
     func testRecordedTerminalIDWins() {
-        XCTAssertEqual(TerminalMatcher.match(record: record(cwd: "/Users/x/foo", terminalID: "t3"), terminals: terminals)?.id, "t3")
+        let r = record(cwd: "/Users/x/foo", terminalID: "t3")
+        XCTAssertEqual(TerminalMatcher.match(record: r, terminals: terminals)?.id, "t3")
     }
 
     func testMatchesByCwd() {
@@ -34,6 +35,7 @@ final class TerminalMatcherTests: XCTestCase {
     }
 
     func testStaleTerminalIDFallsBackToCwd() {
-        XCTAssertEqual(TerminalMatcher.match(record: record(cwd: "/Users/x/foo", terminalID: "gone"), terminals: terminals)?.id, "t1")
+        let r = record(cwd: "/Users/x/foo", terminalID: "gone")
+        XCTAssertEqual(TerminalMatcher.match(record: r, terminals: terminals)?.id, "t1")
     }
 }

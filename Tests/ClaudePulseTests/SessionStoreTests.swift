@@ -14,7 +14,8 @@ final class SessionStoreTests: XCTestCase {
     override func tearDown() { try? FileManager.default.removeItem(at: dir) }
 
     private func store() -> SessionStore {
-        SessionStore(directory: dir, isAlive: { [unowned self] in self.alive.contains($0) }, now: { [unowned self] in self.current })
+        SessionStore(directory: dir, isAlive: { [unowned self] in self.alive.contains($0) },
+                     now: { [unowned self] in self.current })
     }
 
     private func write(_ id: String, state: SessionState = .working, pid: Int32? = 1, age: TimeInterval = 0) throws {

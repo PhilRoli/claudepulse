@@ -32,7 +32,8 @@ final class HookInstallerTests: XCTestCase {
     func testInstallTwiceDoesNotDuplicate() throws {
         let once = try HookInstaller.install(into: nil, executablePath: exe)
         let twice = try HookInstaller.install(into: once, executablePath: "/new/path/ClaudePulse")
-        XCTAssertEqual(commands(try json(twice), "Stop"), ["\"/new/path/ClaudePulse\" --hook Stop \(HookInstaller.marker)"])
+        let expected = "\"/new/path/ClaudePulse\" --hook Stop \(HookInstaller.marker)"
+        XCTAssertEqual(commands(try json(twice), "Stop"), [expected])
     }
 
     func testRemoveDeletesOnlyMarkedEntriesAndPrunesEmpty() throws {

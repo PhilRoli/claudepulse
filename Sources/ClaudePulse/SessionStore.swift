@@ -11,7 +11,8 @@ final class SessionStore {
     private var source: DispatchSourceFileSystemObject?
     private var timer: Timer?
 
-    init(directory: URL, isAlive: @escaping (Int32) -> Bool = { kill($0, 0) == 0 }, now: @escaping () -> Date = Date.init) {
+    init(directory: URL, isAlive: @escaping (Int32) -> Bool = { kill($0, 0) == 0 },
+         now: @escaping () -> Date = Date.init) {
         self.directory = directory
         self.isAlive = isAlive
         self.now = now
@@ -47,7 +48,9 @@ final class SessionStore {
 
     func markSeen(sessionID: String) {
         let url = directory.appendingPathComponent("\(sessionID).json")
-        guard var record = Self.decode(try? Data(contentsOf: url)), record.state == .finished, !record.seen else { return }
+        guard var record = Self.decode(try? Data(contentsOf: url)), record.state == .finished, !record.seen else {
+            return
+        }
         record.seen = true
         try? Self.encode(record).write(to: url, options: .atomic)
     }

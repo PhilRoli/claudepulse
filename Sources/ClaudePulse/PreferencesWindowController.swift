@@ -7,7 +7,7 @@ final class PreferencesWindowController: NSWindowController {
 
     private var config: AppConfig
     private let loginItem: LoginItemController
-    private let notifyCheck = NSButton(checkboxWithTitle: "Notifications", target: nil, action: nil)
+    private let notifyCheck = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
     private let loginCheck = NSButton(checkboxWithTitle: "Launch at login", target: nil, action: nil)
     private let hooksStatus = PreferencesLayout.label("")
     private let installButton = NSButton(title: "Install", target: nil, action: nil)
@@ -39,13 +39,12 @@ final class PreferencesWindowController: NSWindowController {
             PreferencesLayout.sectionLabel("Notifications"), notifyCheck,
             PreferencesLayout.sectionLabel("Startup"), loginCheck,
             PreferencesLayout.sectionLabel("Claude Code hooks"), hooksStatus, hookButtons,
-            PreferencesLayout.separator(width: 280), PreferencesLayout.versionLabel()
+            PreferencesLayout.separator(width: 260), PreferencesLayout.versionLabel()
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 8
-        window.contentView = NSView()
-        window.contentView?.addSubview(stack)
+        stack.spacing = 10
+        stack.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         PreferencesLayout.pinAndFit(stack, in: window)
         window.center()
     }

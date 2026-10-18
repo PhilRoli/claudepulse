@@ -16,7 +16,8 @@ enum HookRunner {
         case "SubagentStop": return .subagentStop
         case "Stop": return .stop
         case "SessionEnd": return .sessionEnd
-        case "Notification": return .notification(isIdleReminder: payload["notification_type"] as? String == "idle_prompt")
+        case "Notification":
+            return .notification(isIdleReminder: payload["notification_type"] as? String == "idle_prompt")
         default: return nil
         }
     }
