@@ -109,4 +109,38 @@ final class SessionReducerTests: XCTestCase {
         existing.terminalID = "t1"
         XCTAssertEqual(apply(.preToolUse, to: existing)?.terminalID, "t1")
     }
+
+    func testStateSinceOnlyChangesWithState() {
+        var r = record(.working)
+        r.stateSince = t0
+        let same = apply(.preToolUse, to: r)
+        XCTAssertEqual(same?.stateSince, t0)
+        XCTAssertEqual(same?.updatedAt, t1)
+        XCTAssertEqual(apply(.stop, to: r)?.stateSince, t1)
+    }
+
+    func testNewRecordStartsNow() {
+        let r = apply(.preToolUse, to: nil)
+        XCTAssertEqual(r?.startedAt, t1)
+        XCTAssertEqual(r?.stateSince, t1)
+    }
+
+    func testCwdKeptFromFirstEvent() {
+        let r = reduce(record(.working), event: .preToolUse, sessionID: "a", cwd: "/p/sub", pid: 1,
+                       terminalID: nil, now: t1)
+        XCTAssertEqual(r?.cwd, "/p")
+    }
+
+    func testEmptyCwdIsFilledLater() {
+        var empty = record(.working)
+        empty.cwd = ""
+        let r = reduce(empty, event: .preToolUse, sessionID: "a", cwd: "/p", pid: 1, terminalID: nil, now: t1)
+        XCTAssertEqual(r?.cwd, "/p")
+    }
+
+    func testPostToolUseClearsNeedsInput() {
+        XCTAssertEqual(apply(.postToolUse, to: record(.needsInput))?.state, .working)
+        let waiting = apply(.postToolUse, to: record(.waitingForSubagent, subagents: 1))
+        XCTAssertEqual(waiting?.state, .waitingForSubagent)
+    }
 }

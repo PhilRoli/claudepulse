@@ -6,8 +6,11 @@ func reduce(_ record: SessionRecord?, event: HookEvent, sessionID: String, cwd: 
             pid: Int32?, terminalID: String?, now: Date) -> SessionRecord? {
     if event == .sessionEnd { return nil }
     var next = record ?? SessionRecord(sessionID: sessionID, cwd: cwd, pid: pid, terminalID: terminalID,
-                                       state: .working, subagents: 0, seen: false, updatedAt: now)
-    next.cwd = cwd
+                                       state: .working, subagents: 0, seen: false, updatedAt: now,
+                                       startedAt: now, stateSince: now)
+    let before = (next.state, next.seen)
+    // The session's directory is fixed by its first event: Claude may wander into subdirectories later.
+    if next.cwd.isEmpty { next.cwd = cwd }
     next.pid = pid
     next.updatedAt = now
     if let terminalID { next.terminalID = terminalID }
@@ -17,7 +20,7 @@ func reduce(_ record: SessionRecord?, event: HookEvent, sessionID: String, cwd: 
         // A fresh, cleared, compacted or resumed session sits idle until the first prompt.
         next.subagents = 0
         markIdle(&next)
-    case .preToolUse:
+    case .preToolUse, .postToolUse:
         // Tool calls made by a running subagent must not pull the session out of waiting.
         if !(next.state == .waitingForSubagent && next.subagents > 0) { next.state = .working }
     case .userPromptSubmit:
@@ -41,6 +44,7 @@ func reduce(_ record: SessionRecord?, event: HookEvent, sessionID: String, cwd: 
     case .sessionEnd:
         break
     }
+    if (next.state, next.seen) != before { next.stateSince = now }
     return next
 }
 

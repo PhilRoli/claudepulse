@@ -12,6 +12,7 @@ enum HookRunner {
         case "SessionStart": return .sessionStart
         case "UserPromptSubmit": return .userPromptSubmit
         case "PreToolUse": return .preToolUse
+        case "PostToolUse": return .postToolUse
         case "SubagentStart": return .subagentStart
         case "SubagentStop": return .subagentStop
         case "Stop": return .stop

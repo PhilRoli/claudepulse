@@ -29,9 +29,10 @@ enum MenuModel {
     static func rows(for records: [SessionRecord], now: Date) -> [SessionRow] {
         records.map { record in
             let name = (record.cwd as NSString).lastPathComponent
+            let since = record.stateSince ?? record.updatedAt
             return SessionRow(sessionID: record.sessionID,
                               title: name.isEmpty ? "/" : name,
-                              detail: "\(label(record)) · \(elapsed(now.timeIntervalSince(record.updatedAt)))")
+                              detail: "\(label(record)) · \(elapsed(now.timeIntervalSince(since)))")
         }
     }
 

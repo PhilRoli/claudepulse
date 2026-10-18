@@ -11,7 +11,7 @@ enum NotificationKind: Equatable {
 }
 
 enum HookEvent: Equatable {
-    case sessionStart, userPromptSubmit, preToolUse, subagentStart, subagentStop
+    case sessionStart, userPromptSubmit, preToolUse, postToolUse, subagentStart, subagentStop
     case notification(NotificationKind), stop, sessionEnd
 }
 
@@ -24,4 +24,7 @@ struct SessionRecord: Codable, Equatable {
     var subagents: Int
     var seen: Bool
     var updatedAt: Date
+    /// When the session first appeared, and when its state last changed. Optional so older files still decode.
+    var startedAt: Date?
+    var stateSince: Date?
 }

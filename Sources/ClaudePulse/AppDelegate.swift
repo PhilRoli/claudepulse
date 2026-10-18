@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var records: [SessionRecord] = []
     private var prefs: PreferencesWindowController?
     private var wakeObserver: NSObjectProtocol?
+    /// NSAppleScript is not documented as thread-safe, so clicks are focused one at a time.
+    private let focusQueue = DispatchQueue(label: "ClaudePulse.focus", qos: .userInitiated)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = MainMenu.make(appName: "ClaudePulse")
@@ -44,7 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func select(sessionID: String) {
         guard let record = records.first(where: { $0.sessionID == sessionID }) else { return }
         let focuser = self.focuser
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        focusQueue.async { [weak self] in
             let outcome = focuser.focus(record: record)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {

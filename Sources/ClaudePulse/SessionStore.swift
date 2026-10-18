@@ -31,7 +31,7 @@ final class SessionStore {
         return try? decoder.decode(SessionRecord.self, from: data)
     }
 
-    /// Live sessions, oldest update first. Corrupt files are skipped; dead or stale ones are deleted.
+    /// Live sessions, oldest first. Corrupt files are skipped; dead or stale ones are deleted.
     func load() -> [SessionRecord] {
         let urls = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
         var records: [SessionRecord] = []
@@ -44,7 +44,7 @@ final class SessionStore {
                 records.append(record)
             }
         }
-        return records.sorted { $0.updatedAt < $1.updatedAt }
+        return records.sorted { ($0.startedAt ?? $0.updatedAt) < ($1.startedAt ?? $1.updatedAt) }
     }
 
     func markSeen(sessionID: String) {
@@ -87,7 +87,8 @@ final class SessionStore {
     }
 
     private func isStale(_ record: SessionRecord) -> Bool {
-        if let pid = record.pid { return !isAlive(pid) }
+        if let pid = record.pid, !isAlive(pid) { return true }
+        // A live pid can be reused by an unrelated process, so age is a backstop either way.
         return now().timeIntervalSince(record.updatedAt) > Self.staleAfter
     }
 }

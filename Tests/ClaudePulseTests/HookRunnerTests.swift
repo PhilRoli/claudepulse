@@ -78,6 +78,7 @@ final class HookRunnerTests: XCTestCase {
                        .notification(.other))
         XCTAssertEqual(HookRunner.eventFrom(hookName: "Notification", payload: [:]), .notification(.needsInput))
         XCTAssertEqual(HookRunner.eventFrom(hookName: "SubagentStop", payload: [:]), .subagentStop)
+        XCTAssertEqual(HookRunner.eventFrom(hookName: "PostToolUse", payload: [:]), .postToolUse)
         XCTAssertNil(HookRunner.eventFrom(hookName: "Bogus", payload: [:]))
     }
 }

@@ -84,4 +84,22 @@ final class SessionStoreTests: XCTestCase {
         _ = store().load()
         XCTAssertEqual(onDisk, [])
     }
+
+    func testOldRecordIsPrunedEvenWithLivePid() throws {
+        try write("old", pid: 1, age: 13 * 3600)
+        XCTAssertEqual(store().load(), [])
+    }
+
+    func testSortedByStartNotLastUpdate() throws {
+        var first = SessionRecord(sessionID: "first", cwd: "/p", pid: 1, terminalID: nil, state: .working,
+                                  subagents: 0, seen: false, updatedAt: current)
+        first.startedAt = current.addingTimeInterval(-500)
+        var second = first
+        second.sessionID = "second"
+        second.startedAt = current.addingTimeInterval(-100)
+        second.updatedAt = current.addingTimeInterval(-400)
+        try SessionStore.encode(first).write(to: dir.appendingPathComponent("first.json"))
+        try SessionStore.encode(second).write(to: dir.appendingPathComponent("second.json"))
+        XCTAssertEqual(store().load().map(\.sessionID), ["first", "second"])
+    }
 }

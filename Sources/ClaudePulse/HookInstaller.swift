@@ -5,8 +5,8 @@ enum HookInstaller {
     struct InvalidSettings: Error {}
 
     static let marker = "# claudepulse"
-    static let events = ["SessionStart", "UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop",
-                         "Notification", "Stop", "SessionEnd"]
+    static let events = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart",
+                         "SubagentStop", "Notification", "Stop", "SessionEnd"]
 
     static func install(into settings: Data?, executablePath: String) throws -> Data {
         var root = try parse(settings)
@@ -25,11 +25,17 @@ enum HookInstaller {
         var root = try parse(settings)
         var hooks = root["hooks"] as? [String: Any] ?? [:]
         for (event, value) in hooks {
-            let groups = strip(value as? [[String: Any]] ?? [])
+            guard let existing = value as? [[String: Any]] else { continue }
+            let groups = strip(existing)
             hooks[event] = groups.isEmpty ? nil : groups
         }
         root["hooks"] = hooks.isEmpty ? nil : hooks
         return try serialize(root)
+    }
+
+    /// Hooks run this executable on every event, so it must live somewhere that survives relaunches.
+    static func isStableExecutable(_ path: String) -> Bool {
+        path.hasPrefix("/Applications/") || path.hasPrefix(NSHomeDirectory() + "/Applications/")
     }
 
     static func isInstalled(in settings: Data?) -> Bool {

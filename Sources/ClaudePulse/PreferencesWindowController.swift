@@ -83,6 +83,10 @@ final class PreferencesWindowController: NSWindowController {
 
     @objc private func installHooks() {
         let path = Bundle.main.executablePath ?? CommandLine.arguments[0]
+        guard HookInstaller.isStableExecutable(path) else {
+            refreshHooksStatus(error: "Move ClaudePulse to /Applications first")
+            return
+        }
         do {
             try HookInstaller.installToDisk(settingsURL: settingsURL, executablePath: path)
             refreshHooksStatus()

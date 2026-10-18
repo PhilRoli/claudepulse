@@ -29,8 +29,12 @@ final class GhosttyFocuser {
             return .activatedOnly
         }
         var error: NSDictionary?
-        NSAppleScript(source: "tell application \"Ghostty\" to focus terminal id \"\(target.id)\"")?
-            .executeAndReturnError(&error)
+        let focusScript = """
+        with timeout of 3 seconds
+        tell application "Ghostty" to focus terminal id "\(target.id)"
+        end timeout
+        """
+        NSAppleScript(source: focusScript)?.executeAndReturnError(&error)
         activate()
         return error == nil ? .focused : .activatedOnly
     }
@@ -42,8 +46,11 @@ final class GhosttyFocuser {
 
     private func listTerminals() -> ListResult {
         var error: NSDictionary?
-        let script = NSAppleScript(
-            source: "tell application \"Ghostty\" to get {id, working directory} of every terminal")
+        let script = NSAppleScript(source: """
+        with timeout of 3 seconds
+        tell application "Ghostty" to get {id, working directory} of every terminal
+        end timeout
+        """)
         guard let result = script?.executeAndReturnError(&error), error == nil else {
             return .failure((error?[NSAppleScript.errorNumber] as? Int) ?? 0)
         }

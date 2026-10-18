@@ -50,4 +50,10 @@ final class MenuModelTests: XCTestCase {
     func testRootCwdFallsBackToSlash() {
         XCTAssertEqual(MenuModel.rows(for: [record(.working, cwd: "/")], now: now).first?.title, "/")
     }
+
+    func testElapsedUsesStateSinceNotLastUpdate() {
+        var r = record(.working, age: 5)
+        r.stateSince = now.addingTimeInterval(-120)
+        XCTAssertEqual(MenuModel.rows(for: [r], now: now).first?.detail, "working · 2m")
+    }
 }

@@ -100,4 +100,21 @@ final class HookInstallerTests: XCTestCase {
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
         XCTAssertEqual(try String(contentsOf: file), #"{"model":"opus"}"#)
     }
+
+    func testStableExecutablePaths() {
+        XCTAssertTrue(HookInstaller.isStableExecutable("/Applications/ClaudePulse.app/Contents/MacOS/ClaudePulse"))
+        XCTAssertFalse(HookInstaller.isStableExecutable("/Users/x/ClaudePulse/.build/debug/ClaudePulse"))
+        XCTAssertFalse(HookInstaller.isStableExecutable("/private/var/folders/x/AppTranslocation/y/d/ClaudePulse"))
+    }
+
+    func testRemoveLeavesNonArrayHookValuesAlone() throws {
+        let existing = #"{"hooks":{"Custom":{"weird":true},"Stop":[]}}"#
+        let out = try json(HookInstaller.remove(from: Data(existing.utf8)))
+        let hooks = try XCTUnwrap(out["hooks"] as? [String: Any])
+        XCTAssertNotNil(hooks["Custom"])
+    }
+
+    func testEventsIncludePostToolUse() {
+        XCTAssertTrue(HookInstaller.events.contains("PostToolUse"))
+    }
 }
