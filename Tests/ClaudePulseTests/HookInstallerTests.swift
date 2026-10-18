@@ -70,4 +70,17 @@ final class HookInstallerTests: XCTestCase {
         XCTAssertThrowsError(try HookInstaller.installToDisk(settingsURL: bad, executablePath: exe))
         XCTAssertEqual(try String(contentsOf: bad), "{oops")
     }
+
+    func testInstallToDiskPreservesFilePermissions() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("settings.json")
+        try Data("{}".utf8).write(to: file)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+        try HookInstaller.installToDisk(settingsURL: file, executablePath: exe)
+        XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? Int, 0o600)
+        try HookInstaller.removeFromDisk(settingsURL: file)
+        XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? Int, 0o600)
+    }
 }
