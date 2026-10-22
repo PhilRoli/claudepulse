@@ -27,4 +27,8 @@ struct SessionRecord: Codable, Equatable {
     /// When the session first appeared, and when its state last changed. Optional so older files still decode.
     var startedAt: Date?
     var stateSince: Date?
+    /// The session's `/rename` title, if any; shown instead of the directory name.
+    var name: String?
+    /// The session's `/color` name (e.g. "orange"), shown as a dot beside the name.
+    var color: String?
 }

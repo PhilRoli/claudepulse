@@ -40,15 +40,40 @@ enum HookRunner {
         let file = directory.appendingPathComponent("\(sessionID).json")
         try? SessionLock.run(directory: directory, sessionID: sessionID) {
             let existing = SessionStore.decode(try? Data(contentsOf: file))
-            guard let next = reduce(existing, event: event, sessionID: sessionID, cwd: cwd,
+            guard var next = reduce(existing, event: event, sessionID: sessionID, cwd: cwd,
                                     pid: pid, terminalID: nil, now: now) else {
                 try? FileManager.default.removeItem(at: file)
                 return
+            }
+            let transcript = payload["transcript_path"] as? String
+            if let name = transcriptValue(path: transcript, type: "custom-title", key: "customTitle") {
+                next.name = name
+            }
+            if let color = transcriptValue(path: transcript, type: "agent-color", key: "agentColor") {
+                next.color = color
             }
             try SessionStore.encode(next).write(to: file, options: .atomic)
         }
         if event == .sessionEnd { SessionLock.remove(directory: directory, sessionID: sessionID) }
         return 0
+    }
+
+    /// The last `key` of a `type` entry in the transcript's tail. Claude Code appends one entry per `/rename`
+    /// (`custom-title`) or `/color` (`agent-color`).
+    static func transcriptValue(path: String?, type: String, key: String) -> String? {
+        guard let path, let handle = FileHandle(forReadingAtPath: path) else { return nil }
+        defer { try? handle.close() }
+        let window: UInt64 = 256 * 1024
+        guard let size = try? handle.seekToEnd() else { return nil }
+        try? handle.seek(toOffset: size > window ? size - window : 0)
+        guard let data = try? handle.readToEnd(), let text = String(bytes: data, encoding: .utf8) else { return nil }
+        for line in text.split(separator: "\n").reversed() where line.contains("\"\(type)\"") {
+            guard let entry = (try? JSONSerialization.jsonObject(with: Data(line.utf8))) as? [String: Any],
+                  entry["type"] as? String == type,
+                  let value = entry[key] as? String, !value.isEmpty else { continue }
+            return value
+        }
+        return nil
     }
 
     private static func isSafeFileName(_ name: String) -> Bool {

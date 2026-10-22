@@ -13,6 +13,7 @@ struct SessionRow: Equatable {
     var sessionID: String
     var title: String
     var detail: String
+    var color: String?
 }
 
 enum MenuModel {
@@ -28,11 +29,12 @@ enum MenuModel {
 
     static func rows(for records: [SessionRecord], now: Date) -> [SessionRow] {
         records.map { record in
-            let name = (record.cwd as NSString).lastPathComponent
+            let name = record.name ?? (record.cwd as NSString).lastPathComponent
             let since = record.stateSince ?? record.updatedAt
             return SessionRow(sessionID: record.sessionID,
                               title: name.isEmpty ? "/" : name,
-                              detail: "\(label(record)) · \(elapsed(now.timeIntervalSince(since)))")
+                              detail: "\(label(record)) · \(elapsed(now.timeIntervalSince(since)))",
+                              color: record.color)
         }
     }
 

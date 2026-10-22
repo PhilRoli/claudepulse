@@ -76,11 +76,31 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func title(for row: SessionRow) -> NSAttributedString {
-        let title = NSMutableAttributedString(string: row.title, attributes: [.font: NSFont.systemFont(ofSize: 13)])
+        let title = NSMutableAttributedString()
+        if let color = row.color.flatMap(Self.sessionColor) {
+            title.append(NSAttributedString(string: "● ", attributes: [
+                .font: NSFont.systemFont(ofSize: 13), .foregroundColor: color]))
+        }
+        title.append(NSAttributedString(string: row.title, attributes: [.font: NSFont.systemFont(ofSize: 13)]))
         title.append(NSAttributedString(string: "   \(row.detail)", attributes: [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular),
             .foregroundColor: NSColor.secondaryLabelColor]))
         return title
+    }
+
+    /// Claude Code's `/color` names; unknown names show no dot.
+    private static func sessionColor(_ name: String) -> NSColor? {
+        switch name {
+        case "red": .systemRed
+        case "blue": .systemBlue
+        case "green": .systemGreen
+        case "yellow": .systemYellow
+        case "purple": .systemPurple
+        case "orange": .systemOrange
+        case "pink": .systemPink
+        case "cyan": .systemTeal
+        default: nil
+        }
     }
 
     @objc private func selected(_ sender: NSMenuItem) {

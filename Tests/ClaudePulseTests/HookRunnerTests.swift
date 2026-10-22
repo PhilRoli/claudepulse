@@ -82,3 +82,15 @@ final class HookRunnerTests: XCTestCase {
         XCTAssertNil(HookRunner.eventFrom(hookName: "Bogus", payload: [:]))
     }
 }
+
+final class SessionTitleTests: XCTestCase {
+    func testLastCustomTitleWins() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("t-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let lines = [#"{"type":"user"}"#, #"{"type":"custom-title","customTitle":"old","sessionId":"a"}"#,
+                     #"{"type":"custom-title","customTitle":"new","sessionId":"a"}"#, #"{"type":"user"}"#]
+        try lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
+        XCTAssertEqual(HookRunner.transcriptValue(path: url.path, type: "custom-title", key: "customTitle"), "new")
+        XCTAssertNil(HookRunner.transcriptValue(path: "/nonexistent", type: "custom-title", key: "customTitle"))
+    }
+}
