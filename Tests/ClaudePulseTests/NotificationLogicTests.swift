@@ -15,6 +15,12 @@ final class NotificationLogicTests: XCTestCase {
         XCTAssertEqual(notified([record(.working)], [record(.needsInput)]), ["a"])
     }
 
+    func testNewIdleSessionDoesNotNotify() {
+        var idle = record(.finished)
+        idle.seen = true
+        XCTAssertEqual(notified([], [idle]), [])
+    }
+
     func testUnchangedNeedsInputDoesNotNotify() {
         XCTAssertEqual(notified([record(.needsInput)], [record(.needsInput)]), [])
     }

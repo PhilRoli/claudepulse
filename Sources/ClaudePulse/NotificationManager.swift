@@ -19,7 +19,8 @@ final class NotificationManager {
         guard enabled else { return [] }
         let before = Dictionary(old.map { ($0.sessionID, $0.state) }, uniquingKeysWith: { first, _ in first })
         return new.filter { record in
-            guard record.state == .needsInput || record.state == .finished else { return false }
+            // A session that starts idle is already marked seen, so it must not announce "finished".
+            guard record.state == .needsInput || (record.state == .finished && !record.seen) else { return false }
             return before[record.sessionID] != record.state
         }
     }
